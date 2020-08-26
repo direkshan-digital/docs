@@ -3,7 +3,16 @@ to use a Kubernetes secret as a Volume with Knative. We will create a new Google
 Service Account and place it into a Kubernetes secret, then we will mount it
 into a container as a Volume.
 
-## Prerequisites
+Follow the steps below to create the sample code and then deploy the app to your
+cluster. You can also download a working copy of the sample, by running the
+following commands:
+
+```shell
+git clone -b "{{< branch >}}" https://github.com/knative/docs knative-docs
+cd knative-docs/docs/serving/samples/secrets-go
+```
+
+## Before you begin
 
 - A Kubernetes cluster with Knative installed. Follow the
   [installation instructions](../../../install/README.md) if you need to create
@@ -20,10 +29,6 @@ into a container as a Volume.
 
 ## Recreating the sample code
 
-While you can clone all of the code from this directory, simple apps are
-generally more useful if you build them step-by-step. The following instructions
-recreate the source files from this folder.
-
 1. Create a new file named `secrets.go` and paste the following code. This code
    creates a basic web server which listens on port 8080:
 
@@ -31,51 +36,51 @@ recreate the source files from this folder.
    package main
 
    import (
-   	"context"
-   	"fmt"
-   	"log"
-   	"net/http"
-   	"os"
+    "context"
+    "fmt"
+    "log"
+    "net/http"
+    "os"
 
-   	"cloud.google.com/go/storage"
+    "cloud.google.com/go/storage"
    )
 
    func main() {
-   	log.Print("Secrets sample started.")
+    log.Print("Secrets sample started.")
 
-   	// This sets up the standard GCS storage client, which will pull
-   	// credentials from GOOGLE_APPLICATION_DEFAULT if specified.
-   	ctx := context.Background()
-   	client, err := storage.NewClient(ctx)
-   	if err != nil {
-   		log.Fatalf("Unable to initialize storage client: %v", err)
-   	}
+    // This sets up the standard GCS storage client, which will pull
+    // credentials from GOOGLE_APPLICATION_CREDENTIALS if specified.
+    ctx := context.Background()
+    client, err := storage.NewClient(ctx)
+    if err != nil {
+      log.Fatalf("Unable to initialize storage client: %v", err)
+    }
 
-   	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-   		// This GCS bucket has been configured so that any authenticated
-   		// user can access it (Read Only), so any Service Account can
-   		// run this sample.
-   		bkt := client.Bucket("knative-secrets-sample")
+    http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+      // This GCS bucket has been configured so that any authenticated
+      // user can access it (Read Only), so any Service Account can
+      // run this sample.
+      bkt := client.Bucket("knative-secrets-sample")
 
-   		// Access the attributes of this GCS bucket, and write it back to the
-   		// user.  On failure, return a 500 and the error message.
-   		attrs, err := bkt.Attrs(ctx)
-   		if err != nil {
-   			http.Error(w, err.Error(), http.StatusInternalServerError)
-   			return
-   		}
-   		fmt.Fprintln(w,
-   			fmt.Sprintf("bucket %s, created at %s, is located in %s with storage class %s\n",
-   				attrs.Name, attrs.Created, attrs.Location, attrs.StorageClass))
+      // Access the attributes of this GCS bucket, and write it back to the
+      // user.  On failure, return a 500 and the error message.
+      attrs, err := bkt.Attrs(ctx)
+      if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+      }
+      fmt.Fprintln(w,
+        fmt.Sprintf("bucket %s, created at %s, is located in %s with storage class %s\n",
+          attrs.Name, attrs.Created, attrs.Location, attrs.StorageClass))
 
-   	})
+    })
 
-   	port := os.Getenv("PORT")
-   	if port == "" {
-   		port = "8080"
-   	}
+    port := os.Getenv("PORT")
+    if port == "" {
+      port = "8080"
+    }
 
-   	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
+    log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
    }
    ```
 
@@ -84,7 +89,7 @@ recreate the source files from this folder.
    [Deploying Go servers with Docker](https://blog.golang.org/docker).
 
    ```docker
-   # Use the offical Golang image to create a build artifact.
+   # Use the official Golang image to create a build artifact.
    # This is based on Debian and sets the GOPATH to /go.
    # https://hub.docker.com/_/golang
    FROM golang as builder
@@ -133,7 +138,7 @@ recreate the source files from this folder.
 
    ```shell
    gcloud iam service-accounts keys create robot.json \
-     --iam-account=knative-secrets@$PROJECT_ID.iam.gserviceaccount.com
+    --iam-account=knative-secrets@$PROJECT_ID.iam.gserviceaccount.com
    ```
 
 1. Create a new Kubernetes secret from this JSON key:
@@ -151,44 +156,42 @@ recreate the source files from this folder.
    username.
 
    ```yaml
-   apiVersion: serving.knative.dev/v1alpha1
+   apiVersion: serving.knative.dev/v1
    kind: Service
    metadata:
      name: secrets-go
      namespace: default
    spec:
-     runLatest:
-       configuration:
-         revisionTemplate:
-           spec:
-             container:
-               # Replace {username} with your DockerHub username
-               image: docker.io/{username}/secrets-go
+     template:
+       spec:
+         containers:
+           # Replace {username} with your DockerHub username
+           - image: docker.io/{username}/secrets-go
 
-               env:
-                 # This directs the Google Cloud SDK to use the identity and project
-                 # defined by the Service Account (aka robot) in the JSON file at
-                 # this path.
-                 #  - `/var/secret` is determined by the `volumeMounts[0].mountPath`
-                 #   below. This can be changed if both places are changed.
-                 #  - `robot.json` is determined by the "key" that is used to hold the
-                 #   secret content in the Kubernetes secret.  This can be changed
-                 #   if both places are changed.
-                 - name: GOOGLE_APPLICATION_DEFAULT
-                   value: /var/secret/robot.json
+             env:
+               # This directs the Google Cloud SDK to use the identity and project
+               # defined by the Service Account (aka robot) in the JSON file at
+               # this path.
+               #  - `/var/secret` is determined by the `volumeMounts[0].mountPath`
+               #   below. This can be changed if both places are changed.
+               #  - `robot.json` is determined by the "key" that is used to hold the
+               #   secret content in the Kubernetes secret.  This can be changed
+               #   if both places are changed.
+               - name: GOOGLE_APPLICATION_CREDENTIALS
+                 value: /var/secret/robot.json
 
-               # This section specified where in the container we want the
-               # volume containing our secret to be mounted.
-               volumeMounts:
-                 - name: robot-secret
-                   mountPath: /var/secret
-
-             # This section attaches the secret "google-robot-secret" to
-             # the Pod holding the user container.
-             volumes:
+             # This section specified where in the container we want the
+             # volume containing our secret to be mounted.
+             volumeMounts:
                - name: robot-secret
-                 secret:
-                   secretName: google-robot-secret
+                 mountPath: /var/secret
+
+         # This section attaches the secret "google-robot-secret" to
+         # the Pod holding the user container.
+         volumes:
+           - name: robot-secret
+             secret:
+               secretName: google-robot-secret
    ```
 
 ## Building and deploying the sample
@@ -224,57 +227,24 @@ folder) you're ready to build and deploy the sample app.
      for your app.
    - Automatically scale your pods up and down (including to zero active pods).
 
-1. Run the following command to find the external IP address for your service.
-   The ingress IP for your cluster is returned. If you just created your
-   cluster, you might need to wait and rerun the command until your service gets
-   asssigned an external IP address.
-
-   ```shell
-   # In Knative 0.2.x and prior versions, the `knative-ingressgateway` service was used instead of `istio-ingressgateway`.
-   INGRESSGATEWAY=knative-ingressgateway
-
-   # The use of `knative-ingressgateway` is deprecated in Knative v0.3.x.
-   # Use `istio-ingressgateway` instead, since `knative-ingressgateway`
-   # will be removed in Knative v0.4.
-   if kubectl get configmap config-istio -n knative-serving &> /dev/null; then
-       INGRESSGATEWAY=istio-ingressgateway
-   fi
-
-   kubectl get svc $INGRESSGATEWAY --namespace istio-system
-   ```
-
-   Example:
-
-   ```shell
-   NAME                     TYPE           CLUSTER-IP     EXTERNAL-IP      PORT(S)                                      AGE
-   xxxxxxx-ingressgateway   LoadBalancer   10.23.247.74   35.203.155.229   80:32380/TCP,443:32390/TCP,32400:32400/TCP   2d
-   ```
-
 1. Run the following command to find the domain URL for your service:
 
    ```shell
-   kubectl get ksvc secrets-go  --output=custom-columns=NAME:.metadata.name,DOMAIN:.status.domain
+   kubectl get ksvc secrets-go  --output=custom-columns=NAME:.metadata.name,URL:.status.url
    ```
 
    Example:
 
    ```shell
-   NAME                DOMAIN
-   secrets-go       secrets-go.default.example.com
+   NAME             URL
+   secrets-go       http://secrets-go.default.1.2.3.4.xip.io
    ```
 
-1. Test your app by sending it a request. Use the following `curl` command with
-   the domain URL `secrets-go.default.example.com` and `EXTERNAL-IP` address
-   that you retrieved in the previous steps:
+1. Now you can make a request to your app and see the result. Replace
+   the URL below with the URL returned in the previous command.
 
    ```shell
-   curl -H "Host: secrets-go.default.example.com" http://{EXTERNAL_IP_ADDRESS}
-   ```
-
-   Example:
-
-   ```shell
-   curl -H "Host: secrets-go.default.example.com" http://35.203.155.229
+   curl http://secrets-go.default.1.2.3.4.xip.io
    bucket knative-secrets-sample, created at 2019-02-01 14:44:05.804 +0000 UTC, is located in US with storage class MULTI_REGIONAL
    ```
 

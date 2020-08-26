@@ -1,41 +1,21 @@
 ---
-title: "Checking the version of your Knative Serving installation"
+title: "Checking the version of your Knative components"
 linkTitle: "Checking your install version"
 weight: 20
 type: "docs"
 ---
 
-If you want to check what version of Knative serving you have installed, enter
-the following command:
+To obtain the version of the Knative component that you have running on your cluster, you query for the
+`[component].knative.dev/release` label with the following commands:
 
-```bash
-kubectl describe deploy controller --namespace knative-serving
-```
+* Knative Serving
 
-This will return the description for the `knative-serving` controller; this
-information contains the link to the container that was used to install Knative:
+  ```bash
+  kubectl get namespace knative-serving -o 'go-template={{index .metadata.labels "serving.knative.dev/release"}}'
+  ```
 
-```yaml
----
-Pod Template:
-  Labels: app=controller
-  Annotations: sidecar.istio.io/inject=false
-  Service Account: controller
-  Containers:
-    controller:
-      # Link to container used for Knative install
-      Image: gcr.io/knative-releases/github.com/knative/serving/cmd/controller@sha256:59abc8765d4396a3fc7cac27a932a9cc151ee66343fa5338fb7146b607c6e306
-```
+* Knative Eventing
 
-Copy the full `gcr.io` link to the container and paste it into your browser. If
-you are already signed in to a Google account, you'll be taken to the Google
-Container Registry page for that container in the Google Cloud Platform console.
-If you aren't already signed in, you'll need to sign in to a Google account
-before you can view the container details.
-
-On the container details page, you'll see a section titled "Container
-classification," and in that section is a list of tags. The versions of Knative
-you have installed will appear in the list as `v0.1.1`, or whatever version you
-have installed:
-
-![Shows list of tags on container details page; v0.1.1 is the Knative version and is the first tag.](../../images/knative-version.png)
+  ```bash
+  kubectl get namespace knative-eventing -o 'go-template={{index .metadata.labels "eventing.knative.dev/release"}}'
+  ```

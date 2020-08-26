@@ -2,19 +2,24 @@ A simple web app written in Ruby that you can use for testing. It reads in an
 env variable `TARGET` and prints "Hello \${TARGET}!". If TARGET is not
 specified, it will use "World" as the TARGET.
 
-## Prerequisites
+Follow the steps below to create the sample code and then deploy the app to your
+cluster. You can also download a working copy of the sample, by running the
+following commands:
 
-- A Kubernetes cluster with Knative installed. Follow the
+```shell
+git clone -b "{{< branch >}}" https://github.com/knative/docs knative-docs
+cd knative-docs/docs/serving/samples/hello-world/helloworld-ruby
+```
+
+## Before you begin
+
+- A Kubernetes cluster with Knative installed and DNS configured. Follow the
   [installation instructions](../../../../install/README.md) if you need to
   create one.
 - [Docker](https://www.docker.com) installed and running on your local machine,
   and a Docker Hub account configured (we'll use it for a container registry).
 
-## Steps to recreate the sample code
-
-While you can clone all of the code from this directory, hello world apps are
-generally more useful if you build them step-by-step. The following instructions
-recreate the source files from this folder.
+## Recreating the sample code
 
 1. Create a new directory and cd into it:
 
@@ -31,8 +36,8 @@ recreate the source files from this folder.
    set :bind, '0.0.0.0'
 
    get '/' do
-     target = ENV['TARGET'] || 'World'
-     "Hello #{target}!\n"
+    target = ENV['TARGET'] || 'World'
+    "Hello #{target}!\n"
    end
    ```
 
@@ -41,18 +46,18 @@ recreate the source files from this folder.
    details.
 
    ```docker
-   # Use the official Ruby image.
+   # Use the official lightweight Ruby image.
    # https://hub.docker.com/_/ruby
-   FROM ruby:2.5
+   FROM ruby:2.6-slim
 
    # Install production dependencies.
    WORKDIR /usr/src/app
    COPY Gemfile Gemfile.lock ./
    ENV BUNDLE_FROZEN=true
-   RUN bundle install
+   RUN gem install bundler && bundle install
 
    # Copy local code to the container image.
-   COPY . .
+   COPY . ./
 
    # Run the web service on container startup.
    CMD ["ruby", "./app.rb"]
@@ -79,21 +84,19 @@ recreate the source files from this folder.
    username.
 
    ```yaml
-   apiVersion: serving.knative.dev/v1alpha1
+   apiVersion: serving.knative.dev/v1
    kind: Service
    metadata:
      name: helloworld-ruby
      namespace: default
    spec:
-     runLatest:
-       configuration:
-         revisionTemplate:
-           spec:
-             container:
-               image: docker.io/{username}/helloworld-ruby
-               env:
-                 - name: TARGET
-                   value: "Ruby Sample v1"
+     template:
+       spec:
+         containers:
+           - image: docker.io/{username}/helloworld-ruby
+             env:
+               - name: TARGET
+                 value: "Ruby Sample v1"
    ```
 
 ## Build and deploy this sample
@@ -129,40 +132,19 @@ folder) you're ready to build and deploy the sample app.
      for your app.
    - Automatically scale your pods up and down (including to zero active pods).
 
-1. To find the IP address for your service, use these commands to get the
-   ingress IP for your cluster. If your cluster is new, it may take sometime for
-   the service to get asssigned an external IP address.
-
-   ```shell
-   # In Knative 0.2.x and prior versions, the `knative-ingressgateway` service was used instead of `istio-ingressgateway`.
-   INGRESSGATEWAY=knative-ingressgateway
-
-   # The use of `knative-ingressgateway` is deprecated in Knative v0.3.x.
-   # Use `istio-ingressgateway` instead, since `knative-ingressgateway`
-   # will be removed in Knative v0.4.
-   if kubectl get configmap config-istio -n knative-serving &> /dev/null; then
-       INGRESSGATEWAY=istio-ingressgateway
-   fi
-
-   kubectl get svc $INGRESSGATEWAY --namespace istio-system
-
-   NAME                     TYPE           CLUSTER-IP     EXTERNAL-IP      PORT(S)                                      AGE
-   xxxxxxx-ingressgateway   LoadBalancer   10.23.247.74   35.203.155.229   80:32380/TCP,443:32390/TCP,32400:32400/TCP   2d
-   ```
-
 1. To find the URL for your service, use
 
    ```
-   kubectl get ksvc helloworld-ruby  --output=custom-columns=NAME:.metadata.name,DOMAIN:.status.domain
-   NAME                DOMAIN
-   helloworld-ruby     helloworld-ruby.default.example.com
+   kubectl get ksvc helloworld-ruby  --output=custom-columns=NAME:.metadata.name,URL:.status.url
+   NAME                URL
+   helloworld-ruby     http://helloworld-ruby.default.1.2.3.4.xip.io
    ```
 
-1. Now you can make a request to your app to see the result. Replace
-   `{IP_ADDRESS}` with the address you see returned in the previous step.
+1. Now you can make a request to your app and see the result. Replace
+   the URL below with the URL returned in the previous command.
 
    ```shell
-   curl -H "Host: helloworld-ruby.default.example.com" http://{IP_ADDRESS}
+   curl http://helloworld-ruby.default.1.2.3.4.xip.io
    Hello Ruby Sample v1!
    ```
 

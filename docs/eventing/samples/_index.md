@@ -1,6 +1,9 @@
 ---
-title: "Knative Eventing samples"
-linkTitle: "Sample apps"
-weight: 60
+title: "Knative Eventing code samples"
+linkTitle: "Code samples"
+weight: 100
 type: "docs"
+showlandingtoc: "true"
 ---
+
+{{% readfile file="README.md" %}}

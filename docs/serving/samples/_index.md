@@ -1,8 +1,8 @@
 ---
-title: "Knative Serving sample applications"
-linkTitle: "Sample apps"
-weight: 1
+title: "Knative Serving code samples"
+linkTitle: "Code samples"
+weight: 100
 type: "docs"
 ---
 
-{{% readfile file="README.md" relative="true" markdown="true" %}}
+{{% readfile file="README.md" %}}

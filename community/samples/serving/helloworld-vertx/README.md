@@ -1,5 +1,3 @@
-# Hello World - Eclipse Vert.x sample
-
 Learn how to deploy a simple web app that is written in Java and uses Eclipse
 Vert.x. This samples uses Docker to build locally. The app reads in a `TARGET`
 env variable and then prints "Hello World: \${TARGET}!". If a value for `TARGET`
@@ -15,7 +13,7 @@ You must meet the following requirements to complete this sample:
 
 - A version of the Knative Serving component installed and running on your
   Kubernetes cluster. Follow the
-  [Knative installation instructions](../../../install/README.md) if you need to
+  [Knative installation instructions](../../../../docs/install/README.md) if you need to
   create a Knative cluster.
 - The following software downloaded and install on your loacal machine:
   - [Java SE 8 or later JDK](http://www.oracle.com/technetwork/java/javase/downloads/index.html).
@@ -26,9 +24,9 @@ You must meet the following requirements to complete this sample:
 - A [Docker Hub](https://hub.docker.com/) account where you can push your
   container image.
 
-**Tip**: You can clone the [Knatve/docs repo](https://github.com/knative/docs)
+**Tip**: You can clone the [Knative/docs repo](https://github.com/knative/docs)
 and then modify the source files. Alternatively, learn more by manually creating
-the files youself.
+the files yourself.
 
 ## Creating and configuring the sample code
 
@@ -148,10 +146,6 @@ To create and configure the source files in the root of your working directory:
    # https://hub.docker.com/r/fabric8/s2i-java
    FROM fabric8/s2i-java:2.0
 
-   # Service must listen to $PORT environment variable.
-   # This default value facilitates local development.
-   ENV PORT 8080
-
    # Copy the JAR file to the deployment directory.
    ENV JAVA_APP_DIR=/deployments
    COPY target/helloworld-1.0.0-SNAPSHOT.jar /deployments/
@@ -162,21 +156,19 @@ To create and configure the source files in the root of your working directory:
    the `Eclipse Vert.x Sample v1` value.
 
    ```yaml
-   apiVersion: serving.knative.dev/v1alpha1
+   apiVersion: serving.knative.dev/v1
    kind: Service
    metadata:
      name: helloworld-vertx
      namespace: default
    spec:
-     runLatest:
-       configuration:
-         revisionTemplate:
-           spec:
-             container:
-               image: docker.io/{username}/helloworld-vertx
-               env:
-                 - name: TARGET
-                   value: "Eclipse Vert.x Sample v1"
+     template:
+       spec:
+         containers:
+           - image: docker.io/{username}/helloworld-vertx
+             env:
+               - name: TARGET
+                 value: "Eclipse Vert.x Sample v1"
    ```
 
 ## Building and deploying the sample
@@ -219,52 +211,25 @@ your sample app to your cluster:
 
 To verify that your sample app has been successfully deployed:
 
-1. View your the ingress IP address of your service by running the following
-   `kubectl get` command. Note that it may take sometime for the new service to
-   get asssigned an external IP address, especially if your cluster was newly
-   created.
-
-   ```shell
-   # In Knative 0.2.x and prior versions, the `knative-ingressgateway` service was used instead of `istio-ingressgateway`.
-   INGRESSGATEWAY=knative-ingressgateway
-
-   # The use of `knative-ingressgateway` is deprecated in Knative v0.3.x.
-   # Use `istio-ingressgateway` instead, since `knative-ingressgateway`
-   # will be removed in Knative v0.4.
-   if kubectl get configmap config-istio -n knative-serving &> /dev/null; then
-       INGRESSGATEWAY=istio-ingressgateway
-   fi
-
-   kubectl get svc $INGRESSGATEWAY --namespace istio-system
-   ```
-
-   Example result:
-
-   ```shell
-   NAME                     TYPE           CLUSTER-IP     EXTERNAL-IP      PORT(S)                                      AGE
-   xxxxxxx-ingressgateway   LoadBalancer   10.23.247.74   35.203.155.229   80:32380/TCP,443:32390/TCP,32400:32400/TCP   2d
-   ```
-
 1. Retrieve the URL for your service, by running the following `kubectl get`
    command:
 
    ```shell
-   kubectl get services.serving.knative.dev helloworld-vertx  --output=custom-columns=NAME:.metadata.name,DOMAIN:.status.domain
+   kubectl get ksvc helloworld-vertx  --output=custom-columns=NAME:.metadata.name,URL:.status.url
    ```
 
    Example result:
 
    ```shell
-   NAME                DOMAIN
-   helloworld-vertx     helloworld-vertx.default.example.com
+   NAME                URL
+   helloworld-vertx    http://helloworld-vertx.default.1.2.3.4.xip.io
    ```
 
-1. Run the following `curl` command to test your deployed sample app. You must
-   replace the `{IP_ADDRESS}` variable the URL that your retrieve in the
-   previous step.
+1. Now you can make a request to your app and see the result. Replace
+   the URL below with the URL returned in the previous command.
 
    ```shell
-   curl -H "Host: helloworld-vertx.default.example.com" http://{IP_ADDRESS}
+   curl http://helloworld-vertx.default.1.2.3.4.xip.io
    ```
 
    Example result:
@@ -273,7 +238,7 @@ To verify that your sample app has been successfully deployed:
     Hello World: Eclipse Vert.x Sample v1
    ```
 
-Congtratualations on deploying your sample Java app to Knative!
+Congratulations on deploying your sample Java app to Knative!
 
 ## Removing the sample app deployment
 

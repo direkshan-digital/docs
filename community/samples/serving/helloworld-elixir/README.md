@@ -1,5 +1,3 @@
-# Hello World - Elixir Sample
-
 A simple web application written in [Elixir](https://elixir-lang.org/) using the
 [Phoenix Framework](https://phoenixframework.org/). The application prints all
 environment variables to the main page.
@@ -70,7 +68,7 @@ When asked, if you want to `Fetch and install dependencies? [Yn]` select `y`
 
    # Prepare final layer
    FROM alpine:latest
-   RUN apk update && apk --no-cache --update add bash openssl-dev
+   RUN apk update && apk --no-cache --update add bash openssl-dev ca-certificates
 
    # Add a user so the server will run as a non-root user.
    RUN addgroup -g 1000 appuser && \
@@ -81,8 +79,7 @@ When asked, if you want to `Fetch and install dependencies? [Yn]` select `y`
    # Run everything else as 'appuser'
    USER appuser
 
-   # Document that the service listens on port 8080.
-   ENV PORT=8080 MIX_ENV=prod REPLACE_OS_VARS=true
+   ENV MIX_ENV=prod REPLACE_OS_VARS=true
    WORKDIR /opt/app
    COPY --from=0 /opt/release .
    ENV RUNNER_LOG_DIR /var/log
@@ -96,21 +93,19 @@ When asked, if you want to `Fetch and install dependencies? [Yn]` select `y`
    username.
 
    ```yaml
-   apiVersion: serving.knative.dev/v1alpha1
+   apiVersion: serving.knative.dev/v1
    kind: Service
    metadata:
      name: helloworld-elixir
      namespace: default
    spec:
-     runLatest:
-       configuration:
-         revisionTemplate:
-           spec:
-             container:
-               image: docker.io/{username}/helloworld-elixir
-               env:
-                 - name: TARGET
-                   value: "elixir Sample v1"
+     template:
+       spec:
+         containers:
+           - image: docker.io/{username}/helloworld-elixir
+             env:
+               - name: TARGET
+                 value: "elixir Sample v1"
    ```
 
 # Building and deploying the sample
@@ -158,41 +153,20 @@ above.
       for your app.
     - Automatically scale your pods up and down (including to zero active pods).
 
-1.  To find the IP address for your service, use these commands to get the
-    ingress IP for your cluster. If your cluster is new, it may take sometime
-    for the service to get asssigned an external IP address.
-
-    ```shell
-    # In Knative 0.2.x and prior versions, the `knative-ingressgateway` service was used instead of `istio-ingressgateway`.
-    INGRESSGATEWAY=knative-ingressgateway
-
-    # The use of `knative-ingressgateway` is deprecated in Knative v0.3.x.
-    # Use `istio-ingressgateway` instead, since `knative-ingressgateway`
-    # will be removed in Knative v0.4.
-    if kubectl get configmap config-istio -n knative-serving &> /dev/null; then
-        INGRESSGATEWAY=istio-ingressgateway
-    fi
-
-    kubectl get svc $INGRESSGATEWAY --namespace istio-system
-
-    NAME                     TYPE           CLUSTER-IP     EXTERNAL-IP      PORT(S)                                      AGE
-    xxxxxxx-ingressgateway   LoadBalancer   10.23.247.74   35.203.155.229   80:32380/TCP,443:32390/TCP,32400:32400/TCP   2d
-    ```
-
 1.  To find the URL for your service, use
 
     ```
-    kubectl get ksvc helloworld-elixir --output=custom-columns=NAME:.metadata.name,DOMAIN:.status.domain
+    kubectl get ksvc helloworld-elixir --output=custom-columns=NAME:.metadata.name,URL:.status.url
 
-    NAME                DOMAIN
-    helloworld-elixir   helloworld-elixir.default.example.com
+    NAME                URL
+    helloworld-elixir   http://helloworld-elixir.default.1.2.3.4.xip.io
     ```
 
 1.  Now you can make a request to your app to see the results. Replace
     `{IP_ADDRESS}` with the address you see returned in the previous step.
 
         ```shell
-        curl -H "Host: helloworld-elixir.default.example.com" http://{IP_ADDRESS}
+        curl http://helloworld-elixir.default.1.2.3.4.xip.io
 
         ...
         # HTML from your application is returned.

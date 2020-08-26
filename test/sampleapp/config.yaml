@@ -1,19 +1,18 @@
 languages:
-  - language: "java"
+  - language: "java-spring"
     expectedOutput: "Hello Spring Boot Sample v1!"
     preCommands:
-      - exec: "curl"
-        args: "https://start.spring.io/starter.zip -d dependencies=web -d name=helloworld -d artifactId=helloworld -o helloworld.zip"
       - exec: "unzip"
-        args: "helloworld.zip -d helloworld-java_tmp"
-      - exec: "rm"
-        args: "helloworld.zip"
+        args: "../sampleapp/helloworld-java-spring.zip -d helloworld-java-spring_tmp"
     copies:
       - "/src/main/java/com/example/helloworld/HelloworldApplication.java"
       - "service.yaml"
       - "Dockerfile"
   - language: "go"
     expectedOutput: "Hello Go Sample v1!"
+    preCommands:
+      - exec: "cp"
+        args: "../../docs/serving/samples/hello-world/helloworld-go/go.mod helloworld-go_tmp/go.mod"
     copies:
       - "helloworld.go"
       - "service.yaml"
@@ -27,6 +26,9 @@ languages:
       - "Dockerfile"
   - language: "nodejs"
     expectedOutput: "Hello Node.js Sample v1!"
+    preCommands:
+      - exec: "cp"
+        args: "../../docs/serving/samples/hello-world/helloworld-nodejs/package-lock.json helloworld-nodejs_tmp/package-lock.json"
     copies:
       - "index.js"
       - "package.json"
@@ -46,14 +48,19 @@ languages:
       - "Dockerfile"
   - language: "ruby"
     expectedOutput: "Hello Ruby Sample v1!"
+    preCommands:
+      - exec: "cp"
+        args: "../../docs/serving/samples/hello-world/helloworld-ruby/Gemfile.lock helloworld-ruby_tmp/Gemfile.lock"
     copies:
       - "app.rb"
       - "Gemfile"
-      - "Gemfile.lock"
       - "service.yaml"
       - "Dockerfile"
   - language: "shell"
     expectedOutput: "Hello Shell Sample v1!"
+    preCommands:
+      - exec: "cp"
+        args: "../../docs/serving/samples/hello-world/helloworld-shell/go.mod helloworld-shell_tmp/go.mod"
     copies:
       - "script.sh"
       - "invoke.go"

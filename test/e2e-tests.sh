@@ -14,15 +14,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-source $(dirname $0)/../vendor/github.com/knative/test-infra/scripts/e2e-tests.sh
+source $(dirname $0)/../vendor/knative.dev/test-infra/scripts/e2e-tests.sh
 
-function knative_setup() {
+function install_istio() {
+  ISTIO_VERSION=$(curl https://raw.githubusercontent.com/knative-sandbox/net-istio/master/third_party/istio-stable)
+  echo ">> Bringing up Istio"
+  echo ">> Running Istio CRD installer"
+  kubectl apply -f "https://raw.githubusercontent.com/knative-sandbox/net-istio/master/third_party/${ISTIO_VERSION}/istio-crds.yaml" || return 1
+  wait_until_batch_job_complete istio-system || return 1
+
+  echo ">> Running Istio"
+  kubectl apply -f "https://raw.githubusercontent.com/knative-sandbox/net-istio/master/third_party/${ISTIO_VERSION}/istio-ci-no-mesh.yaml" || return 1
+  wait_until_pods_running istio-system || return 1
+}
+
+function test_setup() {
+  install_istio
   start_latest_knative_serving
 }
 
 # Script entry point.
 
-initialize $@
+initialize $@ --skip-istio-addon
 
 go_test_e2e ./test/e2e || fail_test
 

@@ -80,7 +80,7 @@ export IOTCORE_TOPIC_DEVICE="iot-demo-device-pubsub-topic"
     controller.
 
     ```shell
-    kubectl apply --filename https://github.com/knative/eventing-sources/releases/download/v0.5.0/gcppubsub.yaml
+    kubectl apply --filename https://github.com/knative/eventing-contrib/releases/download/v0.8.2/gcppubsub.yaml
     ```
 
 ### Deploying
@@ -89,9 +89,14 @@ export IOTCORE_TOPIC_DEVICE="iot-demo-device-pubsub-topic"
 
 1. Install the default `Broker`.
 
-    ```shell
-    kubectl label namespace default knative-eventing-injection=enabled
-    ```
+   ```shell
+   kubectl create -f - <<EOF
+   apiVersion: eventing.knative.dev/v1
+   kind: Broker
+   metadata:
+    name: default
+   EOF
+   ```
 
 #### GCP PubSub Source
 
@@ -106,8 +111,8 @@ export IOTCORE_TOPIC_DEVICE="iot-demo-device-pubsub-topic"
 
 #### Trigger
 
-Even though the `Source` isn't completely ready yet, we can setup the
-`Trigger` for all events coming out of it.
+Even though the `Source` isn't completely ready yet, we can setup the `Trigger`
+for all events coming out of it.
 
 1.  Deploy `trigger.yaml`.
 
@@ -173,16 +178,17 @@ see them in the subscriber.
         -events 10
     ```
 
-1. Inspect the logs of the subscriber:
+1.  Inspect the logs of the subscriber:
 
     ```shell
     kubectl logs --selector serving.knative.dev/service=event-display -c user-container
     ```
 
     You should see something along the similar to:
-    
+
     ```shell
     {"ID":"481014114648052","Data":"eyJzb3VyY2VfaWQiOiJpb3QtY29yZSBkZW1vIiwiZXZlbnRfaWQiOiJlaWQtMzI3MjJiMzItZWU5Mi00YzZlLWEzOTgtNDlmYjRkYWYyNGE1IiwiZXZlbnRfdHMiOjE1NTM3MTczOTYsIm1ldHJpYyI6MC4xMzY1MjI5OH0=","Attributes":{"deviceId":"iot-demo-client","deviceNumId":"2754785852315736","deviceRegistryId":"iot-demo","deviceRegistryLocation":"us-central1","projectId":"s9-demo","subFolder":""},"PublishTime":"2019-03-27T20:09:56.685Z"}
+    ```
 
 ### Cleanup
 
@@ -196,7 +202,7 @@ To cleanup the knative resources:
         docs/eventing/samples/iot-core/gcp-pubsub-source.yaml |
     kubectl delete --filename -
     ```
-    
+
 1.  Remove the Trigger:
 
     ```shell
@@ -206,6 +212,5 @@ To cleanup the knative resources:
 1.  Remove the `GcpPubSubSource` controller:
 
     ```shell
-    kubectl delete --filename https://github.com/knative/eventing-sources/releases/download/v0.5.0/gcppubsub.yaml
+    kubectl delete --filename https://github.com/knative/eventing-contrib/releases/download/v0.8.2/gcppubsub.yaml
     ```
-

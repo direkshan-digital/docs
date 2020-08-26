@@ -2,9 +2,18 @@ A simple web app written in Node.js that you can use for testing. It reads in an
 env variable `TARGET` and prints "Hello \${TARGET}!". If TARGET is not
 specified, it will use "World" as the TARGET.
 
-## Prerequisites
+Follow the steps below to create the sample code and then deploy the app to your
+cluster. You can also download a working copy of the sample, by running the
+following commands:
 
-- A Kubernetes cluster with Knative installed. Follow the
+```shell
+git clone -b "{{< branch >}}" https://github.com/knative/docs knative-docs
+cd knative-docs/docs/serving/samples/hello-world/helloworld-nodejs
+```
+
+## Before you begin
+
+- A Kubernetes cluster with Knative installed and DNS configured. Follow the
   [installation instructions](../../../../install/README.md) if you need to
   create one.
 - [Docker](https://www.docker.com) installed and running on your local machine,
@@ -12,10 +21,6 @@ specified, it will use "World" as the TARGET.
 - [Node.js](https://nodejs.org/en/) installed and configured.
 
 ## Recreating the sample code
-
-While you can clone all of the code from this directory, hello world apps are
-generally more useful if you build them step-by-step. The following instructions
-recreate the source files from this folder.
 
 1. Create a new directory and initialize `npm`:
 
@@ -36,25 +41,25 @@ recreate the source files from this folder.
 1. Install the `express` package:
 
    ```shell
-   npm install express --save
+   npm install express
    ```
 
 1. Create a new file named `index.js` and paste the following code:
 
    ```js
-   const express = require("express");
+   const express = require('express');
    const app = express();
 
-   app.get("/", (req, res) => {
-     console.log("Hello world received a request.");
+   app.get('/', (req, res) => {
+     console.log('Hello world received a request.');
 
-     const target = process.env.TARGET || "World";
+     const target = process.env.TARGET || 'World';
      res.send(`Hello ${target}!`);
    });
 
    const port = process.env.PORT || 8080;
    app.listen(port, () => {
-     console.log("Hello world listening on port", port);
+     console.log('Hello world listening on port', port);
    });
    ```
 
@@ -83,9 +88,9 @@ recreate the source files from this folder.
    [Dockerizing a Node.js web app](https://nodejs.org/en/docs/guides/nodejs-docker-webapp/).
 
    ```Dockerfile
-   # Use the official Node.js 10 image.
+   # Use the official lightweight Node.js 12 image.
    # https://hub.docker.com/_/node
-   FROM node:10
+   FROM node:12-slim
 
    # Create and change to the app directory.
    WORKDIR /usr/src/app
@@ -99,10 +104,20 @@ recreate the source files from this folder.
    RUN npm install --only=production
 
    # Copy local code to the container image.
-   COPY . .
+   COPY . ./
 
    # Run the web service on container startup.
    CMD [ "npm", "start" ]
+   ```
+
+1. Create a `.dockerignore` file to ensure that any files related to a local
+   build do not affect the container that you build for deployment.
+
+   ```ignore
+   Dockerfile
+   README.md
+   node_modules
+   npm-debug.log
    ```
 
 1. Create a new file, `service.yaml` and copy the following service definition
@@ -110,21 +125,19 @@ recreate the source files from this folder.
    username.
 
    ```yaml
-   apiVersion: serving.knative.dev/v1alpha1
+   apiVersion: serving.knative.dev/v1
    kind: Service
    metadata:
      name: helloworld-nodejs
      namespace: default
    spec:
-     runLatest:
-       configuration:
-         revisionTemplate:
-           spec:
-             container:
-               image: docker.io/{username}/helloworld-nodejs
-               env:
-                 - name: TARGET
-                   value: "Node.js Sample v1"
+     template:
+       spec:
+         containers:
+           - image: docker.io/{username}/helloworld-nodejs
+             env:
+               - name: TARGET
+                 value: "Node.js Sample v1"
    ```
 
 ## Building and deploying the sample
@@ -160,40 +173,19 @@ folder) you're ready to build and deploy the sample app.
      for your app.
    - Automatically scale your pods up and down (including to zero active pods).
 
-1. To find the IP address for your service, use these commands to get the
-   ingress IP for your cluster. If your cluster is new, it may take sometime for
-   the service to get asssigned an external IP address.
-
-   ```shell
-   # In Knative 0.2.x and prior versions, the `knative-ingressgateway` service was used instead of `istio-ingressgateway`.
-   INGRESSGATEWAY=knative-ingressgateway
-
-   # The use of `knative-ingressgateway` is deprecated in Knative v0.3.x.
-   # Use `istio-ingressgateway` instead, since `knative-ingressgateway`
-   # will be removed in Knative v0.4.
-   if kubectl get configmap config-istio -n knative-serving &> /dev/null; then
-       INGRESSGATEWAY=istio-ingressgateway
-   fi
-
-   kubectl get svc $INGRESSGATEWAY --namespace istio-system
-
-   NAME                     TYPE           CLUSTER-IP     EXTERNAL-IP      PORT(S)                                      AGE
-   xxxxxxx-ingressgateway   LoadBalancer   10.23.247.74   35.203.155.229   80:32380/TCP,443:32390/TCP,32400:32400/TCP   2d
-   ```
-
 1. To find the URL for your service, use
 
    ```
-   kubectl get ksvc helloworld-nodejs  --output=custom-columns=NAME:.metadata.name,DOMAIN:.status.domain
-   NAME                DOMAIN
-   helloworld-nodejs   helloworld-nodejs.default.example.com
+   kubectl get ksvc helloworld-nodejs  --output=custom-columns=NAME:.metadata.name,URL:.status.url
+   NAME                URL
+   helloworld-nodejs   http://helloworld-nodejs.default.1.2.3.4.xip.io
    ```
 
-1. Now you can make a request to your app to see the result. Replace
-   `{IP_ADDRESS}` with the address you see returned in the previous step.
+1. Now you can make a request to your app and see the result. Replace
+   the URL below with the URL returned in the previous command.
 
    ```shell
-   curl -H "Host: helloworld-nodejs.default.example.com" http://{IP_ADDRESS}
+   curl http://helloworld-nodejs.default.1.2.3.4.xip.io
    Hello Node.js Sample v1!
    ```
 

@@ -11,24 +11,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-apiVersion: serving.knative.dev/v1alpha1
+apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
   name: stock-service-example
   namespace: default
 spec:
-  runLatest:
-    configuration:
-      revisionTemplate:
-        spec:
-          container:
-            image: ${REPO}/rest-api-go
-            env:
-              - name: RESOURCE
-                value: stock
-            readinessProbe:
-              httpGet:
-                path: /
-              initialDelaySeconds: 0
-              periodSeconds: 3
+  template:
+    metadata:
+      name: stock-service-example-first
+    spec:
+      containers:
+      - image: ${REPO}/rest-api-go
+        env:
+          - name: RESOURCE
+            value: stock
+        readinessProbe:
+          httpGet:
+            path: /
+          initialDelaySeconds: 0
 

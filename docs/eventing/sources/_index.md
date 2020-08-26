@@ -1,8 +1,7 @@
 ---
-title: "Knative Eventing sources"
-linkTitle: "Eventing sources"
+title: "Event sources"
 weight: 20
 type: "docs"
 ---
 
-{{% readfile file="README.md" relative="true" markdown="true" %}}
+{{% readfile file="README.md" %}}

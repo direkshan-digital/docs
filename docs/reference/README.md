@@ -10,9 +10,8 @@ at [**www.knative.dev**](https://www.knative.dev/docs/reference/).
 The API source files are located at:
 
 - [Serving API](./serving.md)
-- [Build API](./build.md)
 - [Eventing API](./eventing/eventing.md)
-- [Event Sources API](./eventing/eventing-sources.md)
+- [Eventing-contrib resources API](./eventing/eventing-contrib.md)
 
 ## Updating API Reference docs (for Knative maintainers)
 
@@ -58,20 +57,20 @@ To generate a version of the API:
 1. Locate the commits or tags that correspond to the version of the API that you
    want to generate:
 
-   - [Build](https://github.com/knative/build/releases/)
-   - [Eventing](https://github.com/knative/eventing/releases/)
-   - [Eventing Sources](https://github.com/knative/eventing-sources/releases/)
    - [Serving](https://github.com/knative/serving/releases/)
+   - [Eventing](https://github.com/knative/eventing/releases/)
+   - [Eventing-contrib resources](https://github.com/knative/eventing-contrib/releases/)
 
 1. To run the `gen-api-reference-docs.sh` command from the `hack` directory, you
    specify the commits or tags for each of the corresponding Knative component
    variables (`KNATIVE_[component_name]_COMMIT`):
 
    ```
-   KNATIVE_BUILD_COMMIT=[commit_or_tag] \
-   KNATIVE_EVENTING_COMMIT=[commit_or_tag] \
-   KNATIVE_EVENTING_SOURCES_COMMIT=[commit_or_tag] \
+   cd hack
+   
    KNATIVE_SERVING_COMMIT=[commit_or_tag] \
+   KNATIVE_EVENTING_COMMIT=[commit_or_tag] \
+   KNATIVE_EVENTING_CONTRIB_COMMIT=[commit_or_tag] \
    ./gen-api-reference-docs.sh
    ```
 
@@ -90,7 +89,7 @@ To generate a version of the API:
 
 You can now perform the necessary steps to open a PR, complete a review, and
 merge the new API files into the appropriate branch of the `knative/docs` repo.
-See the [contributor flow](../../contributing/DOCS-CONTRIBUTING.md) for details
+See the [contributor flow](https://github.com/knative/community/blob/master/docs/DOCS-CONTRIBUTING.md) for details
 about requesting changes in the `knative/docs` repo.
 
 ### Example
@@ -105,9 +104,8 @@ Using tags from each repo, you would run the following command to generate the
 v0.3.0 API source files:
 
 ```
-KNATIVE_BUILD_COMMIT=v0.3.0 \
-KNATIVE_EVENTING_COMMIT=v0.3.0 \
-KNATIVE_EVENTING_SOURCES_COMMIT=v0.3.0 \
 KNATIVE_SERVING_COMMIT=v0.3.0 \
+KNATIVE_EVENTING_COMMIT=v0.3.0 \
+KNATIVE_EVENTING_CONTRIB_COMMIT=v0.3.0 \
 ./gen-api-reference-docs.sh
 ```

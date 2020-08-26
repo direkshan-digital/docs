@@ -1,4 +1,4 @@
-# Use the offical Golang image to create a build artifact.
+# Use the official Golang image to create a build artifact.
 # This is based on Debian and sets the GOPATH to /go.
 # https://hub.docker.com/_/golang
 FROM golang as builder
@@ -26,10 +26,6 @@ RUN apk add --no-cache ca-certificates
 
 # Copy the binary to the production image from the builder stage.
 COPY --from=builder /go/src/github.com/knative/docs/hellosecrets/hellosecrets /hellosecrets
-
-# Service must listen to $PORT environment variable.
-# This default value facilitates local development.
-ENV PORT 8080
 
 # Run the web service on container startup.
 CMD ["/hellosecrets"]

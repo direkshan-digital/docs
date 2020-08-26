@@ -12,48 +12,42 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-apiVersion: serving.knative.dev/v1alpha1
+apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
   name: search-service
   namespace: default
 spec:
-  runLatest:
-    configuration:
-      revisionTemplate:
-        spec:
-          container:
-            # This is the Go import path for the binary to containerize
-            # and substitute here.
-            image: github.com/knative/docs/docs/serving/samples/knative-routing-go
-            env:
-              - name: SERVICE_NAME
-                value: Search Service
-            readinessProbe:
-              httpGet:
-                path: /
-              initialDelaySeconds: 3
-              periodSeconds: 3
+  template:
+    spec:
+      containers:
+      - # This is the Go import path for the binary to containerize
+        # and substitute here.
+        image: github.com/knative/docs/docs/serving/samples/knative-routing-go
+        env:
+          - name: SERVICE_NAME
+            value: Search Service
+        readinessProbe:
+          httpGet:
+            path: /
+          initialDelaySeconds: 3
 ---
-apiVersion: serving.knative.dev/v1alpha1
+apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
   name: login-service
   namespace: default
 spec:
-  runLatest:
-    configuration:
-      revisionTemplate:
-        spec:
-          container:
-            # This is the Go import path for the binary to containerize
-            # and substitute here.
-            image: github.com/knative/docs/docs/serving/samples/knative-routing-go
-            env:
-              - name: SERVICE_NAME
-                value: Login Service
-            readinessProbe:
-              httpGet:
-                path: /
-              initialDelaySeconds: 3
-              periodSeconds: 3
+  template:
+    spec:
+      containers:
+      - # This is the Go import path for the binary to containerize
+        # and substitute here.
+        image: github.com/knative/docs/docs/serving/samples/knative-routing-go
+        env:
+          - name: SERVICE_NAME
+            value: Login Service
+        readinessProbe:
+          httpGet:
+            path: /
+          initialDelaySeconds: 3
